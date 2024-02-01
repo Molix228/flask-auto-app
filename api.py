@@ -22,11 +22,11 @@ def add_car():
     car = {
         'brand': data['brand'],
         'model': data['model'],
-        'year': int(data['year']),  # Преобразуем в целое число
-        'price': float(data['price']),  # Преобразуем в число с плавающей запятой
+        'year': int(data['year']),
+        'price': float(data['price']),
         'color': data['color'],
-        'weight': float(data['weight']),  # Преобразуем в число с плавающей запятой
-        'mileage': float(data['mileage']),  # Преобразуем в число с плавающей запятой
+        'weight': float(data['weight']),
+        'mileage': float(data['mileage']),
         'specs': data['specs'],
         'photo': data.get('photo', ''),
     }

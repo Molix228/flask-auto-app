@@ -22,11 +22,11 @@ def add_car():
     car = {
         'brand': data['brand'],
         'model': data['model'],
-        'year': data['year'],
-        'price': data['price'],
+        'year': int(data['year']),
+        'price': float(data['price']),
         'color': data['color'],
-        'weight': data['weight'],
-        'mileage': data['mileage'],
+        'weight': float(data['weight']),
+        'mileage': int(data['mileage']),
         'specs': data['specs'],
         'photo': data.get('photo', ''),
     }

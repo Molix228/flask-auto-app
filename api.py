@@ -11,6 +11,7 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
 cars = []
 
+
 @app.route('/api/cars', methods=["POST"])
 def add_car():
     data = request.form  # Используем request.form для данных формы
@@ -32,16 +33,24 @@ def add_car():
 
     cars.append(car)
 
-    return jsonify({'message': 'Added car'}), 201
+    response = jsonify({'message': 'Added car'})
+
+    # Устанавливаем атрибут SameSite=None; Secure
+    response.headers.add('Set-Cookie', 'cookieName=cookieValue; SameSite=None; Secure')
+
+    return response, 201
+
 
 @app.route('/api/cars', methods=["GET"])
 def get_cars():
     return jsonify({'cars': cars})
+
 
 # Маршрут для обслуживания статических файлов
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, ssl_context='adhoc')  # Запуск через HTTPS

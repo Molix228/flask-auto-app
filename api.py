@@ -20,14 +20,14 @@ def add_car():
         return jsonify({'error': 'Missing brand/model'}), 400
 
     car = {
-        'brand': data['brand'],
-        'model': data['model'],
-        'year': int(data['year']),
-        'price': float(data['price']),
-        'color': data['color'],
-        'weight': float(data['weight']),
-        'mileage': float(data['mileage']),
-        'specs': data['specs'],
+        'brand': data.get('brand'),
+        'model': data.get('model'),
+        'year': int(data.get('year')),
+        'price': float(data.get('price')),
+        'color': data.get('color'),
+        'weight': float(data.get('weight'),
+        'mileage': float(data.get('mileage'),
+        'specs': data.get('specs'),
         'photo': data.get('photo', ''),
     }
 

@@ -1,6 +1,7 @@
+import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
@@ -14,7 +15,7 @@ cars = []
 
 @app.route('/api/cars', methods=["POST"])
 def add_car():
-    data = request.json  # Используем request.form для данных формы
+    data = request.form  # Используем request.form для данных формы
 
     if 'brand' not in data or 'model' not in data:
         return jsonify({'error': 'Missing brand/model'}), 400
@@ -28,22 +29,25 @@ def add_car():
         'weight': float(data.get('weight')),
         'mileage': float(data.get('mileage')),
         'specs': data.get('specs'),
-        'photo': data.get('photo', ''),
+        'photo': save_uploaded_file(request.files.get('photo')),  # Save and store filename
     }
 
     cars.append(car)
 
     response = jsonify({'message': 'Added car'})
 
-    # Устанавливаем атрибут SameSite=None; Secure
-    response.headers.add('Set-Cookie', 'cookieName=cookieValue; SameSite=None; Secure')
-
     return response, 201
+
+def save_uploaded_file(file):
+    if file:
+        filename = secure_filename(file.filename)
+        file.save(os.path.join('uploads', filename))
+        return filename
+    return ''
 
 @app.route('/api/cars', methods=["GET"])
 def get_cars():
     return jsonify({'cars': cars})
-
 
 # Маршрут для обслуживания статических файлов
 @app.route('/uploads/<filename>')

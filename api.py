@@ -14,7 +14,7 @@ cars = []
 
 @app.route('/api/cars', methods=["POST"])
 def add_car():
-    data = request.form  # Используем request.form для данных формы
+    data = request.json  # Используем request.form для данных формы
 
     if 'brand' not in data or 'model' not in data:
         return jsonify({'error': 'Missing brand/model'}), 400

@@ -25,8 +25,8 @@ def add_car():
         'year': int(data.get('year')),
         'price': float(data.get('price')),
         'color': data.get('color'),
-        'weight': float(data.get('weight'),
-        'mileage': float(data.get('mileage'),
+        'weight': float(data.get('weight')),
+        'mileage': float(data.get('mileage')),
         'specs': data.get('specs'),
         'photo': data.get('photo', ''),
     }

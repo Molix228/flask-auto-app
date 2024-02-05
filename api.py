@@ -1,9 +1,10 @@
-# app.py
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, url_for
 from flask_cors import CORS
 from flask_restful import Api, Resource, reqparse
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from modules.module import db, Car
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -11,11 +12,23 @@ api = Api(app)
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  # Используйте свою базу данных
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 
 db.init_app(app)
 
-# ...
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+def save_uploaded_file(file):
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        return filename
+    return ''
+
 
 class CarsResource(Resource):
     def get(self):
@@ -34,20 +47,27 @@ class CarsResource(Resource):
         parser.add_argument('weight', type=float)
         parser.add_argument('mileage', type=float)
         parser.add_argument('specs', type=str)
-        parser.add_argument('photo', type=request.files.get)
+        parser.add_argument('photo', type=FileStorage, location='files')
 
         args = parser.parse_args()
 
-        car = Car(brand=args['brand'], model=args['model'], year=args['year'], price=args['price'],
-                  color=args['color'], weight=args['weight'], mileage=args['mileage'], specs=args['specs'],
-                  photo=save_uploaded_file(args['photo']))
+        car = Car(
+            brand=args['brand'],
+            model=args['model'],
+            year=args['year'],
+            price=args['price'],
+            color=args['color'],
+            weight=args['weight'],
+            mileage=args['mileage'],
+            specs=args['specs'],
+            photo=url_for('uploaded_file', filename=save_uploaded_file(args['photo']))
+        )
 
         db.session.add(car)
         db.session.commit()
 
         return {'message': 'Added car'}, 201
 
-# ...
 
 if __name__ == '__main__':
     with app.app_context():

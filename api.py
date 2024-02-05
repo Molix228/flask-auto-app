@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, send_from_directory, url_for
+from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_restful import Api, Resource, reqparse
 from werkzeug.datastructures import FileStorage
@@ -12,18 +13,19 @@ api = Api(app)
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+# Определите путь к базе данных в том же каталоге, что и api.py
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site.db')
 
 db.init_app(app)
+
+migrate = Migrate(app, db)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
 
 def save_uploaded_file(file):
     if file and allowed_file(file.filename):
@@ -32,7 +34,6 @@ def save_uploaded_file(file):
         file.save(file_path)
         return filename
     return ''
-
 
 class CarsResource(Resource):
     def get(self):
@@ -72,8 +73,7 @@ class CarsResource(Resource):
 
         return {'message': 'Added car'}, 201
 
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, ssl_context='adhoc')
+    app.run(debug=True, ssl_context='adhoc', use_reloader=False)

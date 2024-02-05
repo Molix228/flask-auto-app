@@ -1,42 +1,53 @@
-import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from flask_restful import Api, Resource, reqparse
 from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 CORS(app)
+api = Api(app)
 
-# Указываем директорию для статических файлов (например, изображений)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
 cars = []
 
 
-@app.route('/api/cars', methods=["POST"])
-def add_car():
-    data = request.form  # Используем request.form для данных формы
+class CarsResource(Resource):
+    def get(self):
+        return jsonify({'cars': cars})
 
-    if 'brand' not in data or 'model' not in data:
-        return jsonify({'error': 'Missing brand/model'}), 400
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('brand', type=str, required=True)
+        parser.add_argument('model', type=str, required=True)
+        parser.add_argument('year', type=int, required=True)
+        parser.add_argument('price', type=float, required=True)
+        parser.add_argument('color', type=str)
+        parser.add_argument('weight', type=float)
+        parser.add_argument('mileage', type=float)
+        parser.add_argument('specs', type=str)
+        parser.add_argument('photo', type=request.files.get)
 
-    car = {
-        'brand': data.get('brand'),
-        'model': data.get('model'),
-        'year': int(data.get('year')),
-        'price': float(data.get('price')),
-        'color': data.get('color'),
-        'weight': float(data.get('weight')),
-        'mileage': float(data.get('mileage')),
-        'specs': data.get('specs'),
-        'photo': save_uploaded_file(request.files.get('photo')),  # Save and store filename
-    }
+        args = parser.parse_args()
 
-    cars.append(car)
+        car = {
+            'brand': args['brand'],
+            'model': args['model'],
+            'year': args['year'],
+            'price': args['price'],
+            'color': args['color'],
+            'weight': args['weight'],
+            'mileage': args['mileage'],
+            'specs': args['specs'],
+            'photo': save_uploaded_file(args['photo']),
+        }
 
-    response = jsonify({'message': 'Added car'})
+        cars.append(car)
 
-    return response, 201
+        return {'message': 'Added car'}, 201
+
 
 def save_uploaded_file(file):
     if file:
@@ -45,9 +56,8 @@ def save_uploaded_file(file):
         return filename
     return ''
 
-@app.route('/api/cars', methods=["GET"])
-def get_cars():
-    return jsonify({'cars': cars})
+
+api.add_resource(CarsResource, '/api/cars')
 
 # Маршрут для обслуживания статических файлов
 @app.route('/uploads/<filename>')
@@ -56,4 +66,4 @@ def uploaded_file(filename):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, ssl_context='adhoc')  # Запуск через HTTPS
+    app.run(debug=True, ssl_context='adhoc')

@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, send_from_directory
+# app.py
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_restful import Api, Resource, reqparse
 from werkzeug.utils import secure_filename
-import os
+from modules.module import db, Car
 
 app = Flask(__name__)
 CORS(app)
@@ -10,13 +11,18 @@ api = Api(app)
 
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  # Используйте свою базу данных
 
-cars = []
+db.init_app(app)
 
+# ...
 
 class CarsResource(Resource):
     def get(self):
-        return jsonify({'cars': cars})
+        cars = Car.query.all()
+        return jsonify({'cars': [{'brand': car.brand, 'model': car.model, 'year': car.year, 'price': car.price,
+                                  'color': car.color, 'weight': car.weight, 'mileage': car.mileage, 'specs': car.specs,
+                                  'photo': car.photo} for car in cars]})
 
     def post(self):
         parser = reqparse.RequestParser()
@@ -32,38 +38,18 @@ class CarsResource(Resource):
 
         args = parser.parse_args()
 
-        car = {
-            'brand': args['brand'],
-            'model': args['model'],
-            'year': args['year'],
-            'price': args['price'],
-            'color': args['color'],
-            'weight': args['weight'],
-            'mileage': args['mileage'],
-            'specs': args['specs'],
-            'photo': save_uploaded_file(args['photo']),
-        }
+        car = Car(brand=args['brand'], model=args['model'], year=args['year'], price=args['price'],
+                  color=args['color'], weight=args['weight'], mileage=args['mileage'], specs=args['specs'],
+                  photo=save_uploaded_file(args['photo']))
 
-        cars.append(car)
+        db.session.add(car)
+        db.session.commit()
 
         return {'message': 'Added car'}, 201
 
-
-def save_uploaded_file(file):
-    if file:
-        filename = secure_filename(file.filename)
-        file.save(os.path.join('uploads', filename))
-        return filename
-    return ''
-
-
-api.add_resource(CarsResource, '/api/cars')
-
-# Маршрут для обслуживания статических файлов
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
+# ...
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, ssl_context='adhoc')

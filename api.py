@@ -73,6 +73,9 @@ class CarsResource(Resource):
 
         return {'message': 'Added car'}, 201
 
+
+api.add_resource(CarsResource, '/cars')
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
